@@ -1,0 +1,134 @@
+<!--
+    @license
+    Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+    The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+    The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+    Code distributed by Google as part of the polymer project is also
+    subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<!doctype html>
+<html>
+<head>
+
+  <title>Scroll Last Articles</title>
+
+  <script src="../components/webcomponentsjs/webcomponents.js">
+  </script>
+
+  <link rel="import" href="../components/core-ajax/core-ajax.html">
+  <link rel="import" href="../components/core-scroll-threshold/core-scroll-threshold.html">
+
+  <style>
+    #scroller {
+      height: 300px;
+      border: 1px solid red;
+      padding: 20px;
+      overflow: auto;
+    }
+    .thing {
+      padding: 10px;
+      margin: 10px;
+      background: lightblue;
+      border-radius: 10px;
+      font-size: 2em;
+    }
+  </style>
+
+</head>
+<body unresolved>
+
+<template is="auto-binding">
+  <core-scroll-threshold id="threshold" scrollTarget="{{$.scroller}}" lowerThreshold="100" on-lower-trigger="{{loadMore}}" fit></core-scroll-threshold>
+  <div id="scroller" fit>
+    <template repeat="{{i in data}}">
+      <div class="thing">{{i}}</div>
+    </template>
+    <div hidden?="{{!$.threshold.lowerTriggered}}">Please wait...</div>
+  </div>
+</template>
+
+<script>
+  addEventListener('template-bound', function(e) {
+
+
+    var scope = e.target;
+    var n;
+    scope.data = [];
+    for (n=0; n<20; n++) {
+      scope.data.push(n);
+    }
+
+/*
+    scope.loadMore = function() {
+      setTimeout(function() {
+        for (var i=n; i<n+10; i++) {
+          scope.data.push(i);
+        }
+        n = i;
+        scope.$.threshold.clearLower();
+      }, 1000);
+    };
+*/
+
+
+      var data = [];
+      var page = 1;
+      var perPage = 3;
+      var token = '2d3173d8265421cfd028258b18a7c3f9';
+
+
+    scope.loadMore= function() {
+               //make AJAX load call here using core-ajax, etc.
+
+console.log("loadMore data.length : "+data.length+" "+(data.length/perPage));
+
+      if (page > 0) {
+        var ajax = document.createElement('core-ajax');
+        //ajax.url = 'https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=' +
+        //  this.apiKey + '&safe_search=1&sort=interestingness-desc&text=' +
+        //  encodeURIComponent(this.searchText) + '&page=' + this.page + "&format=json&per_page=" + this.perPage;
+
+        page=(data.length/perPage+1);
+
+        ajax.url = 'http://api.nextradiotv.com/bfmbusiness-ipad/3.1//'+token +'/getLastArticles?count=' + perPage+'&page=' + page;
+
+        ajax.addEventListener('core-response', function(e) {
+
+var resp = JSON.parse(e.detail.response);
+
+console.log('articles:'+resp.articles);
+
+resp.articles.forEach(function(o) { data.push(o); });
+
+//this.data = this.data.concat(resp.articles);
+
+//this.posts = this.$.ajax.response.slice(0);
+
+console.log("2. data.length : "+data.length);
+
+scope.$.threshold.clearLower(!!this.page);
+//scope.$.threshold.clearLower();
+//this.$.threshold.clearLower();
+
+/*
+          // setTimeout(function() {
+            var data = this.data;
+            var resp = JSON.parse(e.detail.response.match('jsonFlickrApi\\((.*)\\)')[1]);
+            if (resp.stat == 'ok') {
+              resp.photos.photo.forEach(function(o) { data.push(o); });
+              this.page = (resp.photos.page != resp.photos.pages) ? resp.photos.page + 1 : 0;
+              this.$.threshold.clearLower(!!this.page);
+            }*/
+          }.bind(this), 2000);
+        // }.bind(this));
+        ajax.go();
+      }
+
+    }
+
+  });
+</script>
+
+</body>
+</html>

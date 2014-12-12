@@ -1,0 +1,163 @@
+<link rel="import" href="../components/polymer/polymer.html">
+<!--<link rel="import" href="../post-service/post-service.html">-->
+<link rel="import" href="post-card.html">
+
+<link rel="import" href="../components/core-ajax/core-ajax.html">
+
+<link rel="import" href="../components/core-scroll-threshold/core-scroll-threshold.html">
+
+<polymer-element name="post-list" attributes="show">
+  <template>
+    <style>
+    :host {
+      display: block;
+      width: 100%;
+    }
+    post-card {
+      margin-bottom: 30px;
+    }
+    </style>
+
+<!--
+    <post-service id="service" posts="{{posts}}">
+    </post-service>
+
+    <div layout vertical center>
+
+        <template repeat="{{post in posts}}">
+          <post-card
+      favorite="{{post.favorite}}"
+      on-favorite-tap="{{handleFavorite}}"
+      hidden?="{{show == 'favorites' && !post.favorite}}">
+            <img src="{{post.avatar}}" width="70" height="70">
+            <h2>{{post.username}}</h2>
+            <p>{{post.text}}</p>
+          </post-card>
+        </template>
+
+    </div>
+-->
+
+
+     <core-scroll-threshold id="threshold" scrollTarget="{{$.scroller}}" lowerThreshold="100" on-lower-trigger="{{loadMore}}" fit></core-scroll-threshold>
+        <div id="scroller" fit>
+
+        <template repeat="{{article in data}}">
+          <post-card
+      favorite="{{post.favorite}}"
+      on-favorite-tap="{{handleFavorite}}"
+      hidden?="{{show == 'favorites' && !post.favorite}}">
+            <img src="{{article.image_url}}" width="70" height="70">
+            <h2>{{article.title}}</h2>
+            <p>{{article.chapo}}</p>
+          </post-card>
+        </template>
+
+            <div hidden?="{{!$.threshold.lowerTriggered}}">Please wait...</div>
+        </div>
+
+
+<!--
+<core-scroll-threshold id="threshold" scrollTarget="{{$.scroller}}"
+    lowerThreshold="500" on-lower-trigger="{{loadMore}}">
+</core-scroll-threshold>
+
+  <div id="scroller" style="overflow:auto;" flex>
+
+    <core-list id="list" data="{{data}}" scrollTarget="{{$.scroller}}">
+      <template>
+        <div class="item">
+          <core-image class="photo" sizing="cover" load?="{{!!model}}" src="https://farm{{model.farm}}.staticflickr.com/{{model.server}}/{{model.id}}_{{model.secret}}_m.jpg" preload relative>
+            <div class="title">{{model.title}}</div>
+            <paper-shadow></paper-shadow>
+          </core-image>
+        </div>
+      </template>
+    </core-list>
+
+    <div class="pad" hidden?="{{!$.threshold.lowerTriggered}}" layout horizontal>
+      <paper-spinner active></paper-spinner>
+      <div class="pad-left">Loading...</div>
+    </div>
+
+  </div>
+-->
+
+  </template>
+
+<script>
+Polymer({
+  handleFavorite: function(event, detail, sender) {
+    //var post = sender.templateInstance.model.post;
+    //this.$.service.setFavorite(post.uid, post.favorite); //  Appelle setFavorite dans "post-service" => log a console message
+  },
+  ready: function() {
+    console.log("ready");
+      window.list = this.$.list;
+      this.data = [];
+      this.page = 1;
+      this.perPage = 20;
+      this.token = '2d3173d8265421cfd028258b18a7c3f9';
+      this.loadMore();
+  },
+  loadMore: function() {
+               //make AJAX load call here using core-ajax, etc.
+
+console.log("loadMore this.data.length : "+this.data.length+" "+(this.data.length/this.perPage));
+
+      if (this.page > 0) {
+        var ajax = document.createElement('core-ajax');
+        //ajax.url = 'https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=' +
+        //  this.apiKey + '&safe_search=1&sort=interestingness-desc&text=' +
+        //  encodeURIComponent(this.searchText) + '&page=' + this.page + "&format=json&per_page=" + this.perPage;
+
+        this.page=(this.data.length/this.perPage+1);
+
+        ajax.url = 'http://api.nextradiotv.com/bfmbusiness-ipad/3.1//'+this.token +'/getLastArticles?count=' + this.perPage+'&page=' + this.page;
+
+        ajax.addEventListener('core-response', function(e) {
+//console.log('this.data:'+e.detail.response.articles);
+
+var resp = JSON.parse(e.detail.response);
+/*
+      console.log(e.detail.response.articles);
+      // or
+      console.log(e.target.response.articles);
+      // or
+      console.log(ajax.response.articles);
+*/
+console.log('articles:'+resp.articles);
+
+var data = this.data;
+resp.articles.forEach(function(o) { data.push(o); });
+
+//this.data = this.data.concat(resp.articles);
+
+//this.posts = this.$.ajax.response.slice(0);
+
+console.log("2. this.data.length : "+this.data.length);
+
+//this.$.threshold.clearLower(!!this.page);
+this.$.threshold.clearLower();
+
+/*
+          // setTimeout(function() {
+            var data = this.data;
+            var resp = JSON.parse(e.detail.response.match('jsonFlickrApi\\((.*)\\)')[1]);
+            if (resp.stat == 'ok') {
+              resp.photos.photo.forEach(function(o) { data.push(o); });
+              this.page = (resp.photos.page != resp.photos.pages) ? resp.photos.page + 1 : 0;
+              this.$.threshold.clearLower(!!this.page);
+            }*/
+          }.bind(this), 2000);
+        // }.bind(this));
+        ajax.go();
+      }
+
+  }
+
+
+});
+</script>
+
+</polymer-element>
